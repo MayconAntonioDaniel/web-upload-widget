@@ -4,9 +4,11 @@ import { UploadWidgetHeader } from "./upload-widget-header";
 import { UploadWidgetUploadList } from "./upload-widget-upload-list";
 import { motion, useCycle } from "motion/react";
 import { UploadWidgetMinimizedButton } from "./upload-widget-minimized-button";
+import { usePendingUploads } from "../store/uploads";
 
 export function UploadWidget() {
-  const isThereAnyPendingUpload = true
+  const { isThereAnyPendingUpload } = usePendingUploads()
+  
 
   const [isWidgetOpen, toggleWidgetOpen] = useCycle(false, true)
 
