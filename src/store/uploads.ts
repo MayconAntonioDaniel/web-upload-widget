@@ -2,12 +2,15 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { enableMapSet } from "immer";
 import { uploadFileToStorage } from "../http/upload-file-to-storage";
+import { CanceledError } from "axios";
 
 export type Upload = {
   name: string
   file: File
   abortController: AbortController
   status: 'progress' | 'success' | 'error' | 'canceled'
+  originalSizeInBytes: number
+  uploadSizeInBytes: number
 }
 
 type UploadState = {
@@ -28,7 +31,16 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(immer(
 
     try {
       await uploadFileToStorage(
-        { file: upload.file },
+        { file: upload.file, 
+          onProgress(sizeInBytes) {
+            set((state) => {
+              state.uploads.set(uploadId,{
+                ...upload,
+                uploadSizeInBytes: sizeInBytes,
+              })
+            })
+          }
+        },
         { signal: upload.abortController.signal }
       )
 
@@ -38,7 +50,18 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(immer(
           status: 'success',
         })
       })
-    } catch (error){
+    } catch (error) {
+      if (error instanceof CanceledError) {
+        set((state) => {
+          state.uploads.set(uploadId,{
+            ...upload,
+            status: 'canceled',
+          })
+        })
+
+        return
+      }
+
       set((state) => {
         state.uploads.set(uploadId,{
           ...upload,
@@ -56,13 +79,6 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(immer(
     }
 
     upload.abortController.abort()
-
-    set(state => {
-      state.uploads.set(uploadId, {
-        ...upload,
-        status: 'canceled'
-      })
-    })
   }
   
   function addUploads(files: File[]) {
@@ -74,7 +90,9 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(immer(
         name: file.name,
         file,
         abortController,
-        status: 'progress'
+        status: 'progress',
+        originalSizeInBytes: file.size,
+        uploadSizeInBytes: 0,
       }
 
       set(state => {
