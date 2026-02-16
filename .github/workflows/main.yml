@@ -6,8 +6,8 @@
         - main
   
   env:
-    AWS_S3_BUCKET_STATIC: 'rocketseat-upload-widget-static'
-    AWS_S3_BUCKET_CDN: 'rocketseat-upload-widget-cdn'
+    AWS_S3_BUCKET_STATIC: 'upload-widget-rocketseat-web-static'
+    AWS_S3_BUCKET_CDN: 'upload-widget-rocketseat-web-cdn'
     SOURCE_DIST: './dist'
 
   jobs: 
